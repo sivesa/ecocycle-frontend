@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EcoCycle (household) flavor manifest.
+     Merged with src/main/AndroidManifest.xml when building the `household`
+     flavor. No app-specific permissions beyond the shared INTERNET one in
+     the main manifest. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+</manifest>
