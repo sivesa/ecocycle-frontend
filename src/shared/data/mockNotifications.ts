@@ -64,4 +64,12 @@ export const MOCK_NOTIFICATIONS: MockNotification[] = [
     time: '3 days ago',
     read: true,
   },
+  {
+    id: 'n7',
+    type: 'alert',
+    title: 'Withdrawal Reuired',
+    body: 'Collector from EcoCycle (pty) is on its way to verify you materials.',
+    time: '3 min ago',
+    read: false,
+  },
 ];
