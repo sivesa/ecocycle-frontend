@@ -2,9 +2,9 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Mail, CreditCard, Wallet } from 'lucide-react';
-import AuthLayout from '../layout/AuthLayout';
-import Button from '../components/Button';
-import { COLORS, DISPLAY_FONT } from '../theme/tokens';
+import AuthLayout from '../../../shared/layout/AuthLayout';
+import Button from '../../../shared/components/Button';
+import { COLORS, DISPLAY_FONT } from '../../../shared/theme/tokens';
 
 export interface ActivationScreenProps {
   /** Where the account lands after the R150 is paid (household /tabs/home, collector /tabs/queue). */

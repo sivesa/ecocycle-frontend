@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import AuthLayout from '../layout/AuthLayout';
-import TextField from '../components/TextField';
-import Button from '../components/Button';
-import OtpModal from '../components/OtpModal';
+import AuthLayout from '../../../shared/layout/AuthLayout';
+import TextField from '../../../shared/components/TextField';
+import Button from '../../../shared/components/Button';
+import OtpModal from '../../../shared/components/OtpModal';
 import { normalizeCellphone } from './LoginScreen';
-import { COLORS } from '../theme/tokens';
-import { OTP_MOCK_CODE } from '../data/mockUsers';
+import { COLORS } from '../../../shared/theme/tokens';
+import { OTP_MOCK_CODE } from '../../../shared/data/mockUsers';
 
 export interface SignUpScreenProps {
   /** Where the user lands after sign-up OTP (household /tabs/home, collector /tabs/queue). */
@@ -21,7 +21,7 @@ export interface SignUpScreenProps {
  * R150 activation flow (/activate) — both app registrations share exactly
  * this flow.
  */
-export default function SignUpScreen({ }: SignUpScreenProps = {}) {
+export default function SignUpScreen(_props: SignUpScreenProps = {}) {
   const history = useHistory();
 
   const [firstName, setFirstName] = useState('');

@@ -10,9 +10,9 @@ import { IonReactRouter } from '@ionic/react-router';
 import { Redirect, Route } from 'react-router-dom';
 
 import { AuthProvider, useAuth } from './shared/context/AuthContext';
-import LoginScreen from './shared/pages/LoginScreen';
-import SignUpScreen from './shared/pages/SignUpScreen';
-import ActivationScreen from './shared/pages/ActivationScreen';
+import LoginScreen from './features/household/pages/LoginScreen';
+import SignUpScreen from './features/household/pages/SignUpScreen';
+import ActivationScreen from './features/household/pages/ActivationScreen';
 import PlaceholderScreen from './features/household/pages/PlaceholderScreen';
 import Tabs from './features/household/Tabs';
 

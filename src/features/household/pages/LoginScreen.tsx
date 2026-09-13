@@ -2,12 +2,12 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Eye, EyeOff, KeyRound, Info } from 'lucide-react';
-import AuthLayout from '../layout/AuthLayout';
-import Button from '../components/Button';
-import OtpModal, { formatCellphone } from '../components/OtpModal';
-import { useAuth } from '../context/AuthContext';
-import { MOCK_USERS } from '../data/mockUsers';
-import { COLORS, DISPLAY_FONT } from '../theme/tokens';
+import AuthLayout from '../../../shared/layout/AuthLayout';
+import Button from '../../../shared/components/Button';
+import OtpModal, { formatCellphone } from '../../../shared/components/OtpModal';
+import { useAuth } from '../../../shared/context/AuthContext';
+import { MOCK_USERS } from '../../../shared/data/mockUsers';
+import { COLORS, DISPLAY_FONT } from '../../../shared/theme/tokens';
 
 export function normalizeCellphone(value: string): string {
   const digits = value.replace(/\D/g, '');
