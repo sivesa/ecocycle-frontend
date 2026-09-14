@@ -1,18 +1,16 @@
+// Directory: src/shared/components
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { KeyboardEvent, ClipboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { ShieldCheck, RefreshCw, X, Lock } from 'lucide-react';
 import { useHistory } from 'react-router-dom';
 import { COLORS, DISPLAY_FONT } from '../theme/tokens';
-import { OTP_MOCK_CODE } from '../data/mockUsers';
 
 export interface OtpModalProps {
   open: boolean;
   /** Cellphone number awaiting verification, shown masked in the sheet. */
   cellphone: string;
-  /** The mock OTP value displayed as a hint (mock auth flow only). */
-  otpHint: string;
-  verifyOtp: (code: string) => boolean;
+  verifyOtp: (code: string) => Promise<boolean>;
   onClose: () => void;
   /** Where the user lands after a successful verification. App-specific:
    * household login goes to /tabs/home, collector login goes to /tabs/queue. */
@@ -38,7 +36,7 @@ function maskCellphone(cellphone: string): string {
   return cellphone;
 }
 
-export default function OtpModal({ open, cellphone, otpHint, verifyOtp, onClose, successHref = '/tabs/home' }: OtpModalProps) {
+export default function OtpModal({ open, cellphone, verifyOtp, onClose, successHref = '/tabs/home' }: OtpModalProps) {
   const history = useHistory();
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
@@ -79,25 +77,31 @@ export default function OtpModal({ open, cellphone, otpHint, verifyOtp, onClose,
     return () => window.clearInterval(t);
   }, [open]);
 
-  const submitCode = useCallback(() => {
+  const submitCode = useCallback(async () => {
     if (code.length !== OTP_LENGTH || verifying || success) return;
     setVerifying(true);
     setError(null);
-    // Simulate a network round-trip before verifying against the mock OTP.
-    window.setTimeout(() => {
-      const ok = verifyOtp(code);
+
+    try {
+      const ok = await verifyOtp(code);
       if (ok) {
         setSuccess(true);
         window.setTimeout(() => history.replace(successHref), SUCCESS_MS);
       } else {
         setVerifying(false);
-        setError('That code did not match. Check the demo OTP and try again.');
+        setError('That code did not match. Please try again.');
         setShakeKey((k) => k + 1);
         setDigits(Array(OTP_LENGTH).fill(''));
         inputsRef.current[0]?.focus();
       }
-    }, 550);
-  }, [code, verifying, success, verifyOtp, history]);
+    } catch (err) {
+      setVerifying(false);
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setShakeKey((k) => k + 1);
+      setDigits(Array(OTP_LENGTH).fill(''));
+      inputsRef.current[0]?.focus();
+    }
+  }, [code, verifying, success, verifyOtp, history, successHref]);
 
   // Auto-submit when the 6th digit lands.
   useEffect(() => {
@@ -214,22 +218,6 @@ export default function OtpModal({ open, cellphone, otpHint, verifyOtp, onClose,
                 {maskCellphone(cellphone)}
               </span>
             </p>
-
-            {/* Demo OTP hint */}
-            <button
-              type="button"
-              onClick={() => {
-                const next = OTP_MOCK_CODE.split('');
-                setDigits(next);
-                setError(null);
-                inputsRef.current[OTP_LENGTH - 1]?.focus();
-              }}
-              className="flex items-center gap-2 mb-5 self-start rounded-full px-3 py-1.5 text-xs font-semibold border border-dashed transition hover:bg-kraft/10"
-              style={{ borderColor: `${COLORS.kraft}66`, color: COLORS.kraft }}
-            >
-              <RefreshCw size={12} className="shrink-0" />
-              Demo OTP is {otpHint} — tap to fill
-            </button>
 
             {/* Digit boxes — fluid 6-column grid so they always fit the sheet,
                 regardless of screen width. */}

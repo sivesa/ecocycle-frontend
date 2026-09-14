@@ -1,3 +1,4 @@
+// Directory: src/features/household/pages
 import { useRef, useState, useEffect, useCallback } from 'react';
 import type { ClipboardEvent, KeyboardEvent } from 'react';
 import { IonModal, IonToast } from '@ionic/react';

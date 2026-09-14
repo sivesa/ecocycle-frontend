@@ -1,3 +1,4 @@
+// Directory: src/features/collector/pages
 import { useState } from 'react';
 import { MapPin, Clock, Truck, CheckCircle2, Navigation } from 'lucide-react';
 import AppLayout from '../../../shared/layout/AppLayout';

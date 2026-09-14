@@ -1,3 +1,4 @@
+// Directory: src/features/collector/types
 /**
  * Lifecycle of a single collection (pickup) — mirrors the backend enum
  * one-for-one (do not rename/reorder):

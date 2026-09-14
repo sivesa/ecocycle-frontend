@@ -1,3 +1,4 @@
+// Directory: src/features/collector/data
 import type { AppUser } from '../../../shared/types/user';
 
 // Placeholder collector identity until collector auth/PIN exists. Passed to

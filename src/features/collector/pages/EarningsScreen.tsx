@@ -1,3 +1,4 @@
+// Directory: src/features/collector/pages
 import { Wallet as WalletIcon, ArrowDownLeft, ArrowUpRight, Banknote, TrendingUp } from 'lucide-react';
 import AppLayout from '../../../shared/layout/AppLayout';
 import Card from '../../../shared/components/Card';

@@ -1,3 +1,4 @@
+// Directory: src/shared/data
 /**
  * Shared notifications mock data. Used by the shared NotificationBell
  * (rendered inside the shared AppHeader) for both the household and

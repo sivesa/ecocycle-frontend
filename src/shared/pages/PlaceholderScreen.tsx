@@ -1,3 +1,4 @@
+// Directory: src/shared/pages
 import AppLayout from '../layout/AppLayout';
 import { COLORS, DISPLAY_FONT } from '../theme/tokens';
 

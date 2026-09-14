@@ -1,3 +1,4 @@
+// Directory: src/shared/types
 export interface AppUser {
   firstName: string;
   lastName: string;

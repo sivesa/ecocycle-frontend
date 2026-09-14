@@ -1,3 +1,4 @@
+// Directory: src/shared/components
 import React from 'react';
 import type { ButtonHTMLAttributes, ComponentType } from 'react';
 import { COLORS } from '../theme/tokens';

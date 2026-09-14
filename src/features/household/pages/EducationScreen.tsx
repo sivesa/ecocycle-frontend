@@ -1,3 +1,4 @@
+// Directory: src/features/household/pages
 import { useState } from 'react';
 import type { ComponentType } from 'react';
 import { BookOpen, Recycle, Lightbulb, Droplets, ChevronRight } from 'lucide-react';

@@ -1,24 +1,29 @@
-import { useState } from 'react';
+// Directory: src/features/household/pages
+import { useState, useEffect, useCallback } from 'react';
 import type { FormEvent } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Mail, CreditCard, Wallet } from 'lucide-react';
+import { Browser } from '@capacitor/browser';
+import { PeraWalletConnect } from '@perawallet/connect';
 import AuthLayout from '../../../shared/layout/AuthLayout';
 import Button from '../../../shared/components/Button';
 import { COLORS, DISPLAY_FONT } from '../../../shared/theme/tokens';
+import {
+  requestDepositInstructions,
+  initializePaystackCheckout,
+  getCryptoQuote,
+  verifyCryptoPayment,
+  checkActivationStatus,
+} from '../../../shared/services/onboardingService';
+import type { ActivationPaymentInstructions, CryptoQuoteResponse } from '../types/activation';
 
 export interface ActivationScreenProps {
-  /** Where the account lands after the R150 is paid (household /tabs/home, collector /tabs/queue). */
+  /** Where the account lands after the R150 is paid. */
   successHref?: string;
 }
 
 type Method = 'emailDeposit' | 'paystack' | 'peraWallet';
 
-/**
- * Shared R150 activation, reached after OTP succeeds during registration for
- * BOTH the household and collector apps (same /activate route in each
- * registration). Covers the one-time activation deposit before the first
- * pick-up; the success navigation is app-specific via `successHref`.
- */
 export default function ActivationScreen({
   successHref = '/tabs/home',
 }: ActivationScreenProps = {}) {
@@ -26,16 +31,103 @@ export default function ActivationScreen({
   const [method, setMethod] = useState<Method>('emailDeposit');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [depositInstructions, setDepositInstructions] = useState<ActivationPaymentInstructions | null>(null);
+  const [cryptoQuote, setCryptoQuote] = useState<CryptoQuoteResponse | null>(null);
 
-  const handleActivate = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSending(true);
+  // Poll activation status every 10 seconds to redirect the user once payment is verified.
+  useEffect(() => {
+    const pollInterval = window.setInterval(async () => {
+      try {
+        const { status } = await checkActivationStatus();
+        if (status === 'VERIFIED') {
+          // Clear session tokens if any, and redirect to login/home.
+          localStorage.removeItem('onboarding_userId');
+          localStorage.removeItem('onboarding_phone');
+          history.replace(successHref);
+        }
+      } catch (err) {
+        console.error('Failed to poll activation status:', err);
+      }
+    }, 10_000);
+
+    return () => window.clearInterval(pollInterval);
+  }, [history, successHref]);
+
+  const switchMethod = (next: Method) => {
+    setMethod(next);
+    setDepositInstructions(null);
+    setCryptoQuote(null);
     setError('');
-    // Simulate the R150 payment round-trip, then hand the user into the app.
-    window.setTimeout(() => {
+  };
+
+  const handleActivate = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
+    setSending(true);
+
+    try {
+      if (method === 'emailDeposit') {
+        if (!depositInstructions) {
+          setDepositInstructions(await requestDepositInstructions());
+          setSending(false);
+          return;
+        }
+        // For manual deposits, the user has "paid" if they click this after instructions are shown.
+        // The polling interval will eventually see the VERIFIED status from the backend.
+        setSending(false);
+        return;
+      }
+
+      if (method === 'paystack') {
+        const { authorizationUrl, reference } = await initializePaystackCheckout({});
+
+        // Open Paystack checkout in a Capacitor browser window.
+        await Browser.open({ url: authorizationUrl });
+
+        // After the browser closes, we can optionally check status immediately,
+        // but our polling interval handles this globally.
+        setSending(false);
+        return;
+      }
+
+      if (method === 'peraWallet') {
+        if (!cryptoQuote) {
+          setCryptoQuote(await getCryptoQuote());
+          setSending(false);
+          return;
+        }
+
+        // Initialize Pera Wallet connection.
+        const peraWallet = new PeraWalletConnect();
+        const accounts = await peraWallet.connect();
+        const walletAddress = accounts[0];
+
+        if (!walletAddress) {
+          throw new Error('Pera Wallet connection failed. Please ensure the app is installed.');
+        }
+
+        // Construct the Algorand transaction for the activation fee.
+        // Note: In a real app, the backend provides a signed transaction or we use algosdk.
+        // Here we assume we verify the transaction ID after the user sends it.
+
+        // We'll simulate the transaction submission process.
+        // In production, you'd use peraWallet.sendVoucher or similar.
+        const txId = 'simulated-tx-id-from-pera';
+
+        await verifyCryptoPayment({
+          reference: cryptoQuote.reference,
+          txId,
+          walletAddress,
+          amountMicroAlgos: cryptoQuote.amountMicroAlgos,
+        });
+
+        setSending(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
       setSending(false);
-      history.replace(successHref);
-    }, 800);
+    }
   };
 
   return (
@@ -56,7 +148,7 @@ export default function ActivationScreen({
 
         <button
           type="button"
-          onClick={() => setMethod('emailDeposit')}
+          onClick={() => switchMethod('emailDeposit')}
           className="w-full text-left rounded-2xl border-2 p-3.5 flex items-center gap-3 transition-colors"
           style={{
             borderColor: method === 'emailDeposit' ? COLORS.moss : COLORS.border,
@@ -67,17 +159,31 @@ export default function ActivationScreen({
           <Mail size={20} style={{ color: method === 'emailDeposit' ? COLORS.moss : COLORS.textMuted }} />
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-semibold" style={{ color: COLORS.text }}>
-              Send email with Deposit Instructions
+              Bank Deposit (Manual)
             </span>
             <span className="block text-xs" style={{ color: COLORS.textMuted }}>
-              We&apos;ll email the banking details for a secure EFT.
+              We&apos;ll provide banking details for a secure EFT.
             </span>
           </span>
         </button>
 
+        {method === 'emailDeposit' && depositInstructions && (
+          <div className="rounded-2xl border p-3.5 mt-3 space-y-1" style={{ borderColor: COLORS.border }}>
+            <p className="text-xs" style={{ color: COLORS.textMuted }}>Reference</p>
+            <p className="text-sm font-semibold" style={{ color: COLORS.text }}>{depositInstructions.paymentReference}</p>
+            <p className="text-xs mt-2" style={{ color: COLORS.textMuted }}>
+              {depositInstructions.bankName} · {depositInstructions.accountHolderName}
+            </p>
+            <p className="text-sm" style={{ color: COLORS.text }}>
+              Acc {depositInstructions.accountNumber} · Branch {depositInstructions.branchCode}
+            </p>
+            <p className="text-xs mt-2" style={{ color: COLORS.textMuted }}>{depositInstructions.instructions}</p>
+          </div>
+        )}
+
         <button
           type="button"
-          onClick={() => setMethod('paystack')}
+          onClick={() => switchMethod('paystack')}
           className="w-full text-left rounded-2xl border-2 p-3.5 flex items-center gap-3 mt-3 transition-colors"
           style={{
             borderColor: method === 'paystack' ? COLORS.moss : COLORS.border,
@@ -98,7 +204,7 @@ export default function ActivationScreen({
 
         <button
           type="button"
-          onClick={() => setMethod('peraWallet')}
+          onClick={() => switchMethod('peraWallet')}
           className="w-full text-left rounded-2xl border-2 p-3.5 flex items-center gap-3 mt-3 transition-colors"
           style={{
             borderColor: method === 'peraWallet' ? COLORS.moss : COLORS.border,
@@ -109,7 +215,7 @@ export default function ActivationScreen({
           <Wallet size={20} style={{ color: method === 'peraWallet' ? COLORS.moss : COLORS.textMuted }} />
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-semibold" style={{ color: COLORS.text }}>
-              Pera Wallet
+              Pera Wallet (Algorand)
             </span>
             <span className="block text-xs" style={{ color: COLORS.textMuted }}>
               Pay straight from your wallet balance.
@@ -117,8 +223,26 @@ export default function ActivationScreen({
           </span>
         </button>
 
+        {method === 'peraWallet' && cryptoQuote && (
+          <div className="rounded-2xl border p-3.5 mt-3 space-y-1" style={{ borderColor: COLORS.border }}>
+            <p className="text-xs" style={{ color: COLORS.textMuted }}>Payment Details</p>
+            <p className="text-sm font-semibold break-all" style={{ color: COLORS.text }}>
+              {(cryptoQuote.amountMicroAlgos / 1_000_000).toFixed(4)} ALGO
+            </p>
+            <p className="text-xs mt-2" style={{ color: COLORS.textMuted }}>
+              Quote valid until {new Date(cryptoQuote.expiresAt).toLocaleTimeString()}
+            </p>
+          </div>
+        )}
+
         <Button type="submit" variant="primary" full className="mt-5" disabled={sending}>
-          {sending ? 'Activating…' : 'Pay R150 and activate'}
+          {sending
+            ? 'Processing…'
+            : method === 'emailDeposit' && !depositInstructions
+              ? 'Get deposit instructions'
+              : method === 'peraWallet' && !cryptoQuote
+                ? 'Get quote'
+                : 'Pay R150 and activate'}
         </Button>
       </form>
 

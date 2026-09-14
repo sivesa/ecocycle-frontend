@@ -1,3 +1,4 @@
+// Directory: src/shared/components
 import type { PropsWithChildren } from 'react';
 import { COLORS } from '../theme/tokens';
 

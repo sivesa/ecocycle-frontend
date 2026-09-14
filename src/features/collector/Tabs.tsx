@@ -1,3 +1,4 @@
+// Directory: src/features/collector
 import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet } from '@ionic/react';
 import { Redirect, Route } from 'react-router-dom';
 import { home, homeOutline, list, listOutline, navigate, navigateOutline, cash, cashOutline } from 'ionicons/icons';

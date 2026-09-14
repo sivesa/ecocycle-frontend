@@ -1,3 +1,4 @@
+// Directory: src/features/collector/types
 /**
  * Vehicle types a collector may use. This list is authoritative for the
  * collector sign-up vehicle-type dropdown — do not rename values without

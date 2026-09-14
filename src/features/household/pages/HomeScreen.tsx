@@ -1,3 +1,4 @@
+// Directory: src/features/household/pages
 import { Trash2, Clock, TrendingUp, TrendingDown, Award, Leaf } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import AppLayout from '../../../shared/layout/AppLayout';

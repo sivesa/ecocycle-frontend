@@ -1,3 +1,4 @@
+// Directory: src/features/collector/data
 /**
  * Centralised mock data for the EcoCycle collector feature.
  * Every collector screen pulls from here so demo state stays consistent.

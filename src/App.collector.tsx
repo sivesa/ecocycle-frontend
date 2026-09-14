@@ -1,3 +1,4 @@
+// Directory: src
 /* Importing Ionic core first is required — Vite will warn otherwise. */
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';

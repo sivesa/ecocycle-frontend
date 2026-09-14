@@ -1,3 +1,4 @@
+// Directory: src/shared/types
 /**
  * Shared collection-request model. Both the household app (requests a
  * pickup) and the collector app (accepts/weighs/completes it) consume the

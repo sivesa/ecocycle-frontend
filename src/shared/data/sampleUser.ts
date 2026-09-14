@@ -1,3 +1,4 @@
+// Directory: src/shared/data
 import type { AppUser } from '../types/user';
 
 // Placeholder until real auth/session state exists. AppLayout uses this as

@@ -1,3 +1,4 @@
+// Directory: src/shared/components
 import { COLORS } from '../theme/tokens';
 import type { CollectionStatus } from '../types/collection';
 

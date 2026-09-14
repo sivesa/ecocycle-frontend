@@ -1,3 +1,4 @@
+// Directory: src/shared/theme
 // Design tokens for the EcoCycle household app.
 // Kept as plain TS (not just Tailwind config) so components can reuse them
 // inline for things Tailwind's static classes can't express (dynamic accent

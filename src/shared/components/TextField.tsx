@@ -1,3 +1,4 @@
+// Directory: src/shared/components
 import type { InputHTMLAttributes } from 'react';
 import { COLORS } from '../theme/tokens';
 

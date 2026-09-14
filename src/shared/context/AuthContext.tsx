@@ -1,3 +1,4 @@
+// Directory: src/shared/context
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { AppUser } from '../types/user';
 import { OTP_MOCK_CODE, validateCredentials } from '../data/mockUsers';

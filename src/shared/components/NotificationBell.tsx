@@ -1,3 +1,4 @@
+// Directory: src/shared/components
 import { useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { IonPopover } from '@ionic/react';

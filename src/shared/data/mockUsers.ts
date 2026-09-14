@@ -1,3 +1,4 @@
+// Directory: src/shared/data
 import type { AppUser } from '../types/user';
 
 export interface MockHouseholdUser extends AppUser {

@@ -1,3 +1,4 @@
+// Directory: src/features/household/data
 /**
  * Centralised mock data for the EcoCycle household feature.
  * Every household screen pulls from here so demo state stays consistent.

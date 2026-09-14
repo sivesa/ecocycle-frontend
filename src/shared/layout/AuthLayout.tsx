@@ -1,3 +1,4 @@
+// Directory: src/shared/layout
 import type { PropsWithChildren, CSSProperties } from 'react';
 import { IonPage, IonContent } from '@ionic/react';
 import { COLORS } from '../theme/tokens';

@@ -1,3 +1,4 @@
+// Directory: src
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import HouseholdApp from './App.household';

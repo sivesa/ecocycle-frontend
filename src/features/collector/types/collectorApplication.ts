@@ -1,3 +1,4 @@
+// Directory: src/features/collector/types
 import type { VehicleType } from './vehicle';
 
 /**

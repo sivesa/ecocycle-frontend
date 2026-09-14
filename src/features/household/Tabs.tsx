@@ -1,3 +1,4 @@
+// Directory: src/features/household
 import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet } from '@ionic/react';
 import { Redirect, Route } from 'react-router-dom';
 import { home, homeOutline, reload, reloadOutline, wallet, walletOutline, school, schoolOutline } from 'ionicons/icons';
