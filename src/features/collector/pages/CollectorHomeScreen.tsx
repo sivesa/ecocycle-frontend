@@ -44,7 +44,7 @@ export default function CollectorHomeScreen() {
     setRequests((rs) => rs.map((x) => (x.id === r.id ? { ...x, status: 'ACCEPTED' as const } : x)));
   };
 
-  const confirmArrivalOtp: (code: string) => boolean = (code) => {
+  const confirmArrivalOtp: (code: string) => Promise<boolean> = async (code) => {
     if (code === '123456' && arrivalFor) {
       const id = arrivalFor.id;
       setRequests((rs) => rs.map((x) => (x.id === id ? { ...x, status: 'IN_PROGRESS' as const } : x)));

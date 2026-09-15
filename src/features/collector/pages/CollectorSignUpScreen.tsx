@@ -190,7 +190,7 @@ export default function CollectorSignUpScreen() {
         cellphone={formatCellphone(cellphone)}
         otpHint="123456"
         successHref={otpSuccessHref}
-        verifyOtp={() => true}
+        verifyOtp={async () => true}
         onClose={() => setOtpStage(false)}
       />
     </AuthLayout>

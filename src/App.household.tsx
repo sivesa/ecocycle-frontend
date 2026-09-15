@@ -38,7 +38,7 @@ function AppRoutes() {
       </Route>
       <Route exact path="/signup" component={SignUpScreen} />
       <Route exact path="/activate">
-        <ActivationScreen successHref="/tabs/home" />
+        <ActivationScreen successHref="/login" />
       </Route>
 
       {/* Reached from the header's account dropdown — placeholders for now */}

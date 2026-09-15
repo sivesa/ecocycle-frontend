@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { KeyboardEvent, ClipboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { ShieldCheck, RefreshCw, X, Lock } from 'lucide-react';
+import { ShieldCheck, X, Lock } from 'lucide-react';
 import { useHistory } from 'react-router-dom';
 import { COLORS, DISPLAY_FONT } from '../theme/tokens';
 
@@ -15,6 +15,8 @@ export interface OtpModalProps {
   /** Where the user lands after a successful verification. App-specific:
    * household login goes to /tabs/home, collector login goes to /tabs/queue. */
   successHref?: string;
+  /** Demo-only: literal OTP code displayed as a hint beneath the inputs. */
+  otpHint?: string;
 }
 
 const OTP_LENGTH = 6;

@@ -19,7 +19,7 @@ interface AuthContextValue {
   /** The literal OTP code used for mock verification (shown for demo purposes). */
   otpHint: string;
   login: (cellphone: string, password: string) => LoginResult;
-  verifyOtp: (code: string) => boolean;
+  verifyOtp: (code: string) => Promise<boolean>;
   /** Aborts an in-flight OTP verification back to the login form. */
   cancelOtp: () => void;
   logout: () => void;
@@ -36,7 +36,7 @@ const GUEST_AUTH: AuthContextValue = {
   pendingCellphone: null,
   otpHint: OTP_MOCK_CODE,
   login: () => ({ success: false, error: 'Authentication is not configured for this build.' }),
-  verifyOtp: () => false,
+  verifyOtp: async () => false,
   cancelOtp: () => undefined,
   logout: () => undefined,
 };
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const verifyOtp = useCallback(
-    (code: string): boolean => {
+    async (code: string): Promise<boolean> => {
       if (code !== OTP_MOCK_CODE) return false;
       if (!pendingCellphone) return false;
 

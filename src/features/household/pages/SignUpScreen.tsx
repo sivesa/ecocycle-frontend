@@ -9,9 +9,10 @@ import OtpModal from '../../../shared/components/OtpModal';
 import { normalizeCellphone } from './LoginScreen';
 import { COLORS } from '../../../shared/theme/tokens';
 import { registerHousehold } from '../service/onboardingService';
-import { verifyOtp } from '../../../shared/services/onboardingService';
-import { storeAuthTokens } from '../../../shared/services/authStorage';
+import { verifyOtp } from '../../../shared/service/onboardingService';
+import { storeAuthTokens } from '../../../shared/service/authStorage';
 import type { HouseholdOnboardingRequest } from '../types/householdOnboarding';
+import type { AuthResponseDto } from '../../../shared/types/onboarding';
 
 export interface SignUpScreenProps {
   /** Where the user lands after sign-up OTP (currently always /activate). */
@@ -46,9 +47,8 @@ export default function SignUpScreen(_props: SignUpScreenProps = {}) {
    * verifyOtp() throws (via httpClient's ApiError) on any non-2xx response —
    * see OtpModal's submitCode, which already wraps this call in a try/catch
    * and treats a thrown error as "show err.message". So reaching the return
-   * below at all means the backend accepted the code; there's no separate
-   * `verified`/`success` flag on the response to check (AuthResponseDto
-   * just carries the tokens directly on success).
+   * below at all means the backend accepted the code and returned the
+   * AuthResponseDto carrying the access + refresh tokens.
    */
   const handleVerifyOtp = async (code: string): Promise<boolean> => {
     const storedPhone = localStorage.getItem('onboarding_phone');
@@ -56,12 +56,13 @@ export default function SignUpScreen(_props: SignUpScreenProps = {}) {
       throw new Error('Session expired. Please register again.');
     }
 
-    const result = await verifyOtp({ phone: storedPhone, otpCode: code });
+    const authResponse: AuthResponseDto = await verifyOtp({ phone: storedPhone, otpCode: code });
 
-    // Persist the issued session tokens if the response carries them.
-    if (result && typeof result === 'object' && 'accessToken' in result) {
-      const { accessToken, refreshToken } = result as { accessToken?: string; refreshToken?: string };
-      storeAuthTokens(accessToken, refreshToken);
+    // Persist the issued session tokens — the /api/activation/* endpoints
+    // require a valid Bearer token, so we must store them before navigating
+    // to the ActivationScreen.
+    if (authResponse.accessToken) {
+      storeAuthTokens(authResponse.accessToken, authResponse.refreshToken);
     }
 
     localStorage.removeItem('onboarding_userId');
@@ -145,7 +146,7 @@ export default function SignUpScreen(_props: SignUpScreenProps = {}) {
         <TextField label="Cellphone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07X XXX XXXX" autoComplete="tel" required />
         <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email"required />
         <TextField label="ID number" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} inputMode="numeric" maxLength={13} required />
-
+ 
         <fieldset>
           <legend className="text-sm font-medium" style={{ color: COLORS.textMuted }}>Household address</legend>
           <div className="mt-2 space-y-4">

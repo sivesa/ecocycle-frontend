@@ -81,7 +81,7 @@ export default function ActiveRouteScreen() {
     setRequests((rs) => rs.map((r) => (r.id === current.id ? { ...r, status: COMPLETED } : r)));
   };
 
-  const confirmArrivalOtp = (code: string) => {
+  const confirmArrivalOtp = async (code: string): Promise<boolean> => {
     if (!arrivalFor) return false;
     if (code !== '123456') return false;
     setRequests((rs) =>

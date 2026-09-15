@@ -223,7 +223,7 @@ export default function CollectorSignInScreen() {
         cellphone={cellphone}
         otpHint="123456"
         successHref={successHref}
-        verifyOtp={() => true}
+        verifyOtp={async () => true}
         onClose={() => setOtpStage(null)}
       />
     </AuthLayout>
