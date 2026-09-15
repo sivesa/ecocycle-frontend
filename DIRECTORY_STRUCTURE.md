@@ -57,6 +57,7 @@
 │   │   │   ├── AppHeader.tsx
 │   │   │   ├── Button.tsx
 │   │   │   ├── Card.tsx
+│   │   │   ├── DepositInstructionsModal.tsx
 │   │   │   ├── NotificationBell.tsx
 │   │   │   ├── OtpModal.tsx
 │   │   │   ├── Select.tsx
@@ -74,21 +75,25 @@
 │   │   │   └── AuthLayout.tsx
 │   │   ├── pages/                  # Shared pages
 │   │   │   └── PlaceholderScreen.tsx
+│   │   ├── payment/                # Payment related utilities
 │   │   ├── service/                # Shared services
 │   │   │   ├── authStorage.ts
 │   │   │   ├── httpClient.ts
 │   │   │   ├── onboardingService.ts
 │   │   │   ├── paymentService.ts
+│   │   │   ├── paystackInline.ts
 │   │   │   ├── WastePayment.ts
 │   │   │   └── algorandService.ts
 │   │   ├── theme/                   # Styling and tokens
 │   │   │   ├── tailwind.css
 │   │   │   └── tokens.ts
 │   │   └── types/                  # Shared type definitions
-│   │       ├── payment.ts
-│   │       ├── user.ts
+│   │       ├── activation.ts
 │   │       ├── algorand.types.ts
-│   │       └── collection.ts
+│   │       ├── collection.ts
+│   │       ├── onboarding.ts
+│   │       ├── payment.ts
+│   │       └── user.ts
 │   ├── App.collector.tsx            # Collector app entry component
 │   ├── App.household.tsx            # Household app entry component
 │   ├── main.collector.tsx           # Collector app main entry point
@@ -101,5 +106,5 @@
 ├── postcss.config.js                # PostCSS configuration
 ├── tailwind.config.js              # Tailwind CSS configuration
 ├── tsconfig.json                   # TypeScript configuration
-└── vite.*.config.ts                # Vite configurations (base, collector, household)
+└── vite.*.config.{ts,js}            # Vite configurations (base, collector, household)
 ```

@@ -1,12 +1,22 @@
 // Directory: src/shared/services
-// Paystack Inline — opens the hosted-checkout overlay inside the app's own
-// WebView (an embedded iframe) instead of handing off to the system browser.
-// The backend's /api/activation/paystack/initialize already created the
-// transaction server-side; we only need the returned `accessCode` + the
-// Paystack *public* key (never the secret key) to drive the overlay here.
+// Paystack Inline (Popup V2) — resumes, inside the app's own WebView, a
+// transaction that /api/activation/paystack/initialize already created
+// server-side. resumeTransaction(accessCode) is the purpose-built method
+// for exactly this "initialize on the server, finish on the client"
+// flow — see https://paystack.com/docs/developer-tools/inlinejs/#resume-transaction.
+//
+// We deliberately do NOT use Popup V1 (js.paystack.co/v1/inline.js) here.
+// V1's setup()+openIframe() builds a brand-new client-side transaction and
+// expects `email`/`amount` up front; feeding it an accessCode instead sends
+// a malformed POST to /checkout/request_inline, which Paystack 400s with
+// "Please enter a valid email address" and then marks the transaction
+// `abandoned` server-side — that's the bug this file used to have.
+//
+// No public key is needed on the client for this flow either: the key,
+// amount, and email were already supplied by the backend when it created
+// the transaction, so resumeTransaction only needs the accessCode.
 
-const SDK_URL = 'https://js.paystack.co/v1/inline.js';
-const PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY ?? '';
+const SDK_URL = 'https://js.paystack.co/v2/inline.js';
 
 export interface PaystackInlineOptions {
   /** Returned by POST /api/activation/paystack/initialize — binds the
@@ -14,24 +24,26 @@ export interface PaystackInlineOptions {
   accessCode: string;
   /** Fired once Paystack confirms the transaction succeeded. */
   onSuccess: (reference: string) => void;
-  /** Fired when the user dismisses the overlay without a successful callback. */
+  /** Fired when the user dismisses the overlay, or the transaction fails to
+   * load/complete, without a successful callback. */
   onClose: () => void;
 }
 
-/** Minimal surface of js.paystack.co/v1/inline.js that we rely on. */
-interface PaystackPopHandler {
-  openIframe(): void;
-  openPopup(): void;
+/** Minimal surface of js.paystack.co/v2/inline.js that we rely on. */
+interface PaystackPopInstance {
+  resumeTransaction(
+    accessCode: string,
+    options?: {
+      /** transaction.reference is the payment reference on success. */
+      onSuccess?: (transaction: { reference: string }) => void;
+      onCancel?: () => void;
+      onError?: (error: { message: string }) => void;
+    }
+  ): void;
 }
 
 interface PaystackPopConstructor {
-  setup(options: {
-    key: string;
-    accessCode?: string;
-    onClose?: () => void;
-    /** response.reference is the transaction reference on success. */
-    callback?: (response: { reference: string }) => void;
-  }): PaystackPopHandler;
+  new (): PaystackPopInstance;
 }
 
 declare global {
@@ -59,29 +71,26 @@ function loadSdk(): Promise<void> {
   return sdkPromise;
 }
 
-/** Opens the Paystack inline overlay for a server-created transaction. */
+/** Resumes the server-initialized Paystack transaction inline, in-app. */
 export async function openPaystackInline({
   accessCode,
   onSuccess,
   onClose,
 }: PaystackInlineOptions): Promise<void> {
-  if (!PUBLIC_KEY) {
-    throw new Error('Paystack public key is not configured. Set VITE_PAYSTACK_PUBLIC_KEY.');
-  }
   await loadSdk();
 
-  const handler = window.PaystackPop!.setup({
-    key: PUBLIC_KEY,
-    accessCode,
-    onClose,
-    callback: (response) => onSuccess(response.reference),
-  });
-
-  // Iframe keeps the user inside the app; openPopup is only used as a fallback
-  // for desktop-web dev where the embedded modal can misbehave.
-  try {
-    handler.openIframe();
-  } catch {
-    handler.openPopup();
+  const PaystackPopCtor = window.PaystackPop;
+  if (!PaystackPopCtor) {
+    throw new Error('Paystack payment SDK failed to initialize.');
   }
+
+  const popup = new PaystackPopCtor();
+  popup.resumeTransaction(accessCode, {
+    onSuccess: (transaction) => onSuccess(transaction.reference),
+    onCancel: onClose,
+    // A load/setup failure leaves the user stuck looking at the Popup's own
+    // error state with no way back into our UI — treat it the same as a
+    // cancel so the caller's "Opening payment…" state doesn't hang forever.
+    onError: () => onClose(),
+  });
 }

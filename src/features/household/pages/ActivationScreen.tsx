@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Mail, CreditCard, Wallet, ArrowUpRight, Loader2, CheckCircle2 } from 'lucide-react';
-import { Browser } from '@capacitor/browser';
 import algosdk from 'algosdk';
 import AuthLayout from '../../../shared/layout/AuthLayout';
 import Button from '../../../shared/components/Button';
@@ -17,6 +16,7 @@ import {
   verifyCryptoPayment,
   checkActivationStatus,
 } from '../../../shared/service/onboardingService';
+import { openPaystackInline } from '../../../shared/service/paystackInline';
 import {
   algod,
   peraWallet,
@@ -49,7 +49,7 @@ interface PeraQuoteState {
 const ACCEPTED_STATUSES: ActivationPaymentStatus[] = ['VERIFIED'];
 
 export default function ActivationScreen({
-  successHref = '/tabs/home',
+  successHref = '/login',
 }: ActivationScreenProps = {}) {
   const history = useHistory();
   const { logout } = useAuth();
@@ -133,18 +133,6 @@ export default function ActivationScreen({
     return () => window.clearInterval(pollInterval);
   }, [redirectOnVerified, confirmWithPaystack]);
 
-  // When the Paystack checkout browser closes (fallback path only), verify the tx.
-  useEffect(() => {
-    const listener = Browser.addListener('browserFinished', async () => {
-      const p = paystackRef.current;
-      if (!p) return;
-      await confirmWithPaystack(p.reference);
-    });
-    return () => {
-      listener.then((h) => h.remove());
-    };
-  }, [confirmWithPaystack]);
-
   const switchMethod = (next: Method) => {
     setMethod(next);
     setDepositInstructions(null);
@@ -181,34 +169,36 @@ export default function ActivationScreen({
       // that a previous checkout already handed to the SDK.
       const current = await initializePaystackCheckout({});
       setPaystack(current);
+      // Each explicit open mints a brand-new reference — the double-verify
+      // guard below is per-transaction, not per-component-lifetime, so a
+      // retried payment (e.g. the first attempt came back pending) isn't
+      // silently skipped by a stale ref from an earlier attempt.
+      paystackVerifiedRef.current = false;
 
-      // Paystack Inline cannot start inside this app's Android WebView: the
-      // cross-origin iframe plus third-party storage restrictions make Paystack
-      // mark the transaction `abandoned` and paint its generic
-      // "We could not start this transaction / please enter a valid email
-      // address" error screen (the Reload/Cancel buttons and the email noise are
-      // a red herring — our emails are valid; it's the *inline checkout*, not
-      // the email, that cannot boot). The hosted checkout — opening the real
-      // Paystack payment page in a system browser tab — is the proven-working
-      // path on device:
-      //   1. opens the actual Paystack checkout page, and
-      //   2. on return (browserFinished listener below) we actively verify via
-      //      the backend, which is exactly where localhost dev unblocks because
-      //      the webhook cannot reach a local server.
-      // Note the accessCode from initializePaystackCheckout is single-use, but
-      // we mint it fresh here on every explicit open, which is what keeps the
-      // hosted checkout from 400ing on a stale code.
-      try {
-        await Browser.open({ url: current.authorizationUrl });
-      } catch {
-        // Plain web dev build: no Capacitor — fall back to a new tab.
-        window.open(current.authorizationUrl, '_blank');
+      if (!current.accessCode) {
+        throw new Error('Paystack did not return a checkout code. Please try again.');
       }
+
+      // Paystack Inline renders the hosted-checkout overlay inside the app's
+      // own WebView — no Browser.open handoff and no window.open tab. The
+      // user never leaves the app; onSuccess fires the moment Paystack
+      // confirms the transaction, and onClose fires if they dismiss the
+      // overlay first (the 8s activation-status poll, plus its own
+      // verify-on-poll safety net, still catches a payment that actually
+      // went through after an early close).
+      await openPaystackInline({
+        accessCode: current.accessCode,
+        onSuccess: (reference) => {
+          confirmWithPaystack(reference).finally(() => setBusy(false));
+        },
+        onClose: () => {
+          setBusy(false);
+        },
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not open Paystack.';
       setPaystack((prev) => (prev ? { ...prev, error: message } : prev));
       setError(message);
-    } finally {
       setBusy(false);
     }
   };
